@@ -1,1 +1,1 @@
-# teneNCE
+# Temporal Network Noise Contrastive Estimation (teneNCE)
