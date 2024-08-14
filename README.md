@@ -1,9 +1,9 @@
-[![arXiv](https://img.shields.io/badge/arXiv-2403.18913-blue?logo=arxiv&color=%23B31B1B)](https://arxiv.org/abs/2403.18913)
+[![arXiv](https://img.shields.io/badge/arXiv-2403.18913-blue?logo=arxiv&color=%23B31B1B)](https://arxiv.org/abs/0000.00000)
 
 # Temporal Network Noise Contrastive Estimation (teneNCE)
 This is a PyTorch implementation of the teneNCE model as described in our paper:
 
-Amirhossein Nouranizadeh*, Fatemeh Tabatabaei*, Mohammad Rahmati, [*Temporal Network Noise Contrastive Estimation (teneNCE)*](https://arxiv.org/pdf/2403.18913.pdf), 2024, *equal contribution
+Amirhossein Nouranizadeh*, Fatemeh Tabatabaei*, Mohammad Rahmati, [*Contrastive Representation Learning for Dynamic Link Prediction in Temporal Networks*](https://arxiv.org/pdf/0000.00000.pdf), 2024, *equal contribution
 
 
 ## Table of Contents
@@ -66,8 +66,8 @@ To train and evaluate the teneNCE model, follow the steps below.
 Please cite our paper if you use this code in your own work:
 
 ```bibtex
-@article{Nouranizadeg2024teneNCE,
-  title={Temporal Network Noise Contrastive Estimation (teneNCE)},
+@article{teneNCE,
+  title={Contrastive Representation Learning for Dynamic Link Prediction in Temporal Networks},
   author={Amirhossein Nouranizadeh and Fatemeh Tabatabaei and Mohammad Rahmati},
   year={2024},
   journal={Journal Name},
