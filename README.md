@@ -68,7 +68,7 @@ Please cite our paper if you use this code in your own work:
 ```bibtex
 @article{teneNCE,
   title={Contrastive Representation Learning for Dynamic Link Prediction in Temporal Networks},
-  author={Amirhossein Nouranizadeh and Fatemeh Tabatabaei and Mohammad Rahmati},
+  author={Amirhossein Nouranizadeh, Fatemeh Tabatabaei and Mohammad Rahmati},
   year={2024},
   journal={Journal Name},
   note={\textbf{*}equal contribution}

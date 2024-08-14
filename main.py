@@ -6,8 +6,11 @@ import configparser
 import numpy as np
 import torch
 
-from utils.data import get_data
+# from utils.data import get_data
+from get_dataset import get_data
+from evaluation.eval import link_prediction_evaluation_report
 from model import TENENCE
+from utils.logging import print_dictionary
 
 
 random.seed(23)
