@@ -114,17 +114,17 @@ class TENENCE(nn.Module):
     ) -> None:
         super(TENENCE, self).__init__()
         self.output_dim = output_dim
-        self.gae = GAE(encoder=MPNN(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim))
+        self.encoder = GAE(encoder=MPNN(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim))
         self.update = GGRU(struct_embed_dim=2 * output_dim, state_dim=output_dim)
-        self.timestep_enc = TimeEncoder(dim=output_dim)
+        self.time_encoder = TimeEncoder(dim=output_dim)
         self.decoder = nn.Linear(in_features=output_dim, out_features=output_dim)
         self.link_predictor = nn.Linear(in_features=output_dim, out_features=output_dim)
-        self.predictive_encoder_local = nn.Sequential(
+        self.local_predictive_encoder = nn.Sequential(
             nn.Linear(in_features=2 * output_dim, out_features=2 * output_dim),
             nn.ReLU(),
             nn.Linear(in_features=2 * output_dim, out_features=output_dim),
         )
-        self.predictive_encoder_global = nn.Linear(in_features=2 * output_dim, out_features=output_dim)
+        self.global_predictive_encoder = nn.Linear(in_features=2 * output_dim, out_features=output_dim)
 
     def forward(self, snapshot_sequence: List[Data], normalize: bool = False) -> torch.Tensor:
         # encoder
@@ -143,12 +143,18 @@ class TENENCE(nn.Module):
             normalize: bool = False
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         num_nodes = snapshot_sequence[0].x.size(0)
+        # Initializing empty lists for structural embeddings, embeddings for graph reconstruction and graph prediction
         Z_enc = []
         Z_dec = []
         Z_pred = []
 
+        # Initializing the states
         state = torch.zeros(num_nodes, self.output_dim)
+
+        # Initializing the last seen timesteps of nodes
         last_seen = torch.zeros(num_nodes, dtype=torch.float)
+
+        # Iterating over graphs in the snapshot sequence
         states = []
         for k, graph in enumerate(snapshot_sequence):
             # snapshot data
@@ -156,26 +162,26 @@ class TENENCE(nn.Module):
             edge_index_k = graph.edge_index
             node_mask_k = graph.node_mask
 
-            # gae encoder call
-            z_enc_k = self.gae.encode(x_k, edge_index_k, normalize=normalize)
+            # Encoding current graph
+            z_enc_k = self.encoder.encode(x_k, edge_index_k, normalize=normalize)
             Z_enc.append(z_enc_k.unsqueeze(0))
 
-            # updating last seen embedding for state update
+            # Updating last seen embedding for state update
             src = edge_index_k[0, :].unique()
             last_seen = last_seen.index_fill(0, src, k + 1)
-            last_seen_enc_k = self.timestep_enc(last_seen)
+            last_seen_enc_k = self.time_encoder(last_seen)
 
-            # state update
+            # Updating states
             z_enc_k = torch.cat([z_enc_k, last_seen_enc_k], dim=1)
             state = self.update(z_enc_k, edge_index_k, state)
             states.append(state.unsqueeze(0))
 
-            # GAE decoder
-            z_dec_k = self.dec(state)
+            # Reconstructing current graph
+            z_dec_k = self.decoder(state)
             Z_dec.append(z_dec_k.unsqueeze(0))
 
-            # prediction decoder
-            z_pred_k = self.pred(state)
+            # Predicting next graph
+            z_pred_k = self.link_predictor(state)
             Z_pred.append(z_pred_k.unsqueeze(0))
         states = torch.cat(states, dim=0)
         Z_enc = torch.cat(Z_enc, dim=0)
@@ -200,41 +206,44 @@ class TENENCE(nn.Module):
         infoNCE = torch.tensor(0.0)
         prediction_loss = torch.tensor(0.0)
         ks = torch.arange(len(snapshot_sequence)).unsqueeze(0) + 1
-        ks_enc = self.k_enc(ks)
+        ks_enc = self.time_encoder(ks)
         # losses
         for k, graph in enumerate(snapshot_sequence):
-            # reconstruction loss at k
+            # Computing reconstruction loss at k
             z_dec_k = Z_dec[k]
             edge_index_k = snapshot_sequence[k].edge_index
-            recon_loss_k = self.gae.recon_loss(z_dec_k, edge_index_k)
+            recon_loss_k = self.encoder.recon_loss(z_dec_k, edge_index_k)
             reconstruction_loss += recon_loss_k
 
-            # prediction loss at k
+            # Computing prediction and infoNCE losses at k
             if k < num_timesteps - 1:
+                # Computing prediction loss at k
                 z_pred_k = Z_pred[k]
                 edge_index_next = snapshot_sequence[k + 1].edge_index
-                pred_loss_k = self.gae.recon_loss(z_pred_k, edge_index_next)
+                pred_loss_k = self.encoder.recon_loss(z_pred_k, edge_index_next)
                 prediction_loss += pred_loss_k
 
-                # infoNCE loss at k
+                # Computing infoNCE loss at k
                 state_k = states[k]
                 ks_enc_future_expanded = ks_enc[k + 1:].unsqueeze(1).repeat(1, num_nodes, 1)
                 state_k_expanded = state_k.unsqueeze(0).repeat(len(ks_enc_future_expanded), 1, 1)
-                summary_state_k_expanded = state_k.mean(0).unsqueeze(0).repeat(len(ks_enc[k + 1:]), 1)
-                z_cpc_local_future = self.cpc_local(torch.cat([state_k_expanded, ks_enc_future_expanded], dim=-1))
-                z_cpc_global_future = self.cpc_global(torch.cat([summary_state_k_expanded, ks_enc[k+1:]], dim=-1))
+                global_state_k_expanded = state_k.mean(0).unsqueeze(0).repeat(len(ks_enc[k + 1:]), 1)
+                z_cpc_local_future = self.local_predictive_encoder(
+                    torch.cat([state_k_expanded, ks_enc_future_expanded], dim=-1))
+                z_cpc_global_future = self.global_predictive_encoder(
+                    torch.cat([global_state_k_expanded, ks_enc[k+1:]], dim=-1))
                 z_local_future = Z_enc[k + 1:]
                 z_global_future = Z_enc[k + 1:].mean(1)
 
-                # positive scores
-                # local
+                # Computing positive scores
+                # local positive scores
                 scores_same_k = torch.einsum("TND, LMD -> TNM", z_cpc_local_future, z_local_future)
                 pos_scores_k_local = torch.diagonal(scores_same_k, dim1=1, dim2=2)
 
-                # global
+                # global positive scores
                 pos_scores_k_global = torch.diagonal(z_cpc_global_future @ z_global_future.T)
 
-                # negative scores
+                # Computing negative scores
                 # local
                 # neg_scores_same_k_different_node
                 same_k_not_same_nodes_mask = ~torch.eye(num_nodes, dtype=torch.bool).unsqueeze(0).repeat(

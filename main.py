@@ -60,7 +60,7 @@ def main():
     model.train()
     for epoch in range(500):
         s = time.time()
-        loss = model(train_dataset, normalize=True)
+        loss = model(snapshot_sequence=train_dataset, normalize=True)
         print("[*] epoch: {}, loss: {:.4f}, time: {:.1}".format(epoch, loss.item(), time.time() - s))
 
         scheduler.step(loss.item())
