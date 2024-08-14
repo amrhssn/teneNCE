@@ -68,7 +68,7 @@ Please cite our paper if you use this code in your own work:
 ```bibtex
 @article{Nouranizadeg2024teneNCE,
   title={Temporal Network Noise Contrastive Estimation (teneNCE)},
-  author={Amirhossein Nouranizadeg and Fatemeh Tabatabaei and Mohammad Rahmati},
+  author={Amirhossein Nouranizadeh and Fatemeh Tabatabaei and Mohammad Rahmati},
   year={2024},
   journal={Journal Name},
   note={\textbf{*}equal contribution}
