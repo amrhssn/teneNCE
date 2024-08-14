@@ -3,7 +3,7 @@
 # Temporal Network Noise Contrastive Estimation (teneNCE)
 This is a PyTorch implementation of the teneNCE model as described in our paper:
 
-**Amirhossein Nouranizadeg\*, Fatemeh Tabatabaei\*, Mohammad Rahmati**, [*Temporal Network Noise Contrastive Estimation (teneNCE)*](https://arxiv.org/pdf/2403.18913.pdf), 2024, **\*equal contribution**
+Amirhossein Nouranizadeg*, Fatemeh Tabatabaei*, Mohammad Rahmati, [*Temporal Network Noise Contrastive Estimation (teneNCE)*](https://arxiv.org/pdf/2403.18913.pdf), 2024, *equal contribution
 
 
 ## Table of Contents
