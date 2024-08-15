@@ -30,63 +30,96 @@ Our approach effectively combines structural and temporal information, improving
 For further details on implementation and usage, please refer to the sections below.
 This is a PyTorch implementation of the teneNCE model as described in the paper.
 
+## Installation
 
+To set up the environment for running the **teneNCE** implementations, follow these steps:
 
-## Table of Contents
-- [Introduction](#introduction)
-- [Requirements](#requirements)
-- [Running the Code](#running-the-code)
-  - [Using the Enron Dataset](#using-the-enron-dataset)
-- [Citation](#citation)
-- [Contact](#contact)
+### System Requirements
+- Python 3.10 or higher
+- Pip package manager
 
+### Dependencies
+The **teneNCE** implementations are based on the following libraries:
 
-<!--
-Temporal Network Noise Contrastive Estimation (teneNCE) is a novel framework for learning dynamic representations of temporal networks. The model leverages noise contrastive estimation to efficiently learn from the temporal network structure and dynamics, allowing for scalable and interpretable representations that can be used for a variety of downstream tasks.
-**Abstract:** 
--->
-<!-- Consider adding an abstract-like summary here. -->
+- **PyTorch**: Version 2.3.0. For detailed installation instructions, 
+refer to the [PyTorch installation guide](https://pytorch.org/get-started/previous-versions/) 
+or [PyTorch local installation](https://pytorch.org/get-started/locally/) page.
 
-## Introduction 
-We present a self-supervised method for learning representations of temporal networks, focusing on discrete-time versions to balance computational efficiency and accuracy. Our approach uses a recurrent message-passing neural network and a contrastive training objective that combines link prediction, graph reconstruction, and contrastive predictive coding losses. Empirical results on Enron, COLAB, and Facebook datasets demonstrate that our method outperforms existing models in dynamic link prediction tasks.
-<!--
-Evolving networks are complex data structures that emerge in a wide range of systems in science and engineering. Learning expressive representations for such networks that encode both structural connectivities and their temporal evolution is essential for downstream data analytics and machine learning applications. In this study, we introduce a self-supervised method for learning representations of temporal networks and employ these representations in the dynamic link prediction task. While temporal networks are typically characterized as a sequence of interactions over the continuous time domain, our study focuses on their discrete-time versions. This enables us to balance the trade-off between computational complexity and precise modeling of the interactions. We propose a recurrent message-passing neural network architecture for modeling the information flow over time-respecting paths of temporal networks. The key feature of our method is the contrastive training objective of the model, which is a combination of three loss functions: link prediction, graph reconstruction, and contrastive predictive coding losses. The contrastive predictive coding objective is implemented using infoNCE losses at both local and global scales of the input graphs. We empirically show that the additional self-supervised losses enhance the training and improve the model’s performance in the dynamic link prediction task. The proposed method is tested on Enron, COLAB, and Facebook datasets and exhibits superior results compared to existing models.
+- **PyTorch Geometric**: This library is used for implementing GNNs and graph-based machine learning tasks. 
+For installation, follow the instructions on 
+the [PyTorch Geometric installation](https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html) page.
 
-(Typically, you could add an abstract-like section here, summarizing the main contributions, methodology, and findings of the paper. However, including the full abstract may make the README too long. Instead, consider providing a concise summary or key points that highlight the essence of the work.)
--->
-## Requirements
+- All other dependencies are listed in the `requirements.txt` file.
 
-To run this code, you'll need to install the following dependencies:
+### Installation Steps
+1. Clone the Repository:
+```bash
+git clone https://github.com/amrhssn/teneNCE.git
+cd teneNCE
+```
+2. Create and activate a virtual environment (optional but recommended):
+```bash
+python -m venv venv
+source venv/bin/activate 
+```
+3. Install Dependencies:
+```bash
+pip install torch==2.3.0
+pip install torch_geometric
+pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.3.0+cpu.html
+pip install -r requirements.txt
+```
 
-- Python==
-- scikit-learn==
-- torch==
-- torch-cluster==
-- torch-geometric==
-- torch-scatter==
-- torch-sparse==
-- torch-spline-conv==
-- torchvision==
+## Usage
 
-## Running the Code
+To run the **teneNCE** implementation, you will primarily interact with the `main.py` file. 
+Below are instructions for using the code and understanding the hyperparameters.
 
-To train and evaluate the teneNCE model, follow the steps below.
+### Running the Code
 
-### Using the Enron Dataset
+The `main.py` script requires a dataset name argument to specify which dataset to use. 
+The available options are `enron`, `facebook`, and `colab`. 
+By default, the code will run on the _Enron_ dataset if no argument is provided.
 
-1. **Prepare the Dataset:**
-   - Download the Enron dataset and place it in the `dataset/` directory or use the existing data provided in the repository.
+To run the code with a specific dataset, use the following command:
 
-2. **Configure the Model:**
-   - Adjust the configuration settings in the `config.yaml` file if necessary.
+```bash
+python main.py --dataset_name <dataset_name>
+```
 
-3. **Run the Model:**
-   - Execute the main script to start training:
+Replace `<dataset_name>` with one of the available options (`enron`, `facebook`, `colab`).
+For example, to run the code on the _Facebook_ dataset, use:
+```bash
+python main.py --dataset_name facebook
+```
 
-   ```bash
-   python main.py --config config.yaml
-   ```
-   
+### Hyperparameters
+The hyperparameters for the model are configured in the `config.ini` file. 
+Here’s a description of each hyperparameter:
+
+- **EPOCHS**: Number of training epochs. Default is `1000`. 
+
+- **TRAIN_TEST_RATIO**: The ratio of training to testing data split. Default is `0.3`, 
+meaning that the last 30% of the snapshot sequence is used for testing while the first 70% is used for training.
+
+- **HIDDEN_DIM**: Dimensionality of the hidden layers in the model. Default is `256`.
+
+- **OUTPUT_DIM**: Dimensionality of the node representations. Default is `256`.
+
+- **ALPHA**: Weight for the graph reconstruction loss. Default is `1.0`.
+
+- **BETA**: Weight for the contrastive predictive coding loss. Default is `1.0`.
+
+- **LEARNING_RATE**: Learning rate for the optimizer. Default is `0.001`. 
+
+- **WEIGHT_DECAY**: Weight decay for the regularization. Default is `0.0005`.
+
+- **SCHEDULER_PATIENCE**: Number of epochs with no improvement before reducing the learning rate. Default is `200`. 
+
+- **SCHEDULER_FACTOR**: Factor by which the learning rate is reduced. Default is `0.8`. 
+
+- **SCHEDULER_MIN_LR**: Minimum learning rate after reduction. Default is `0.0001`. 
+ 
 ## Citation
 
 Please cite our paper if you use this code in your own work:
@@ -106,7 +139,7 @@ Please cite our paper if you use this code in your own work:
 For any questions or inquiries, please feel free to contact us:
 
 - **Fatemeh Tabatabaei:** [tabatabaeifatemeh@gmail.com](mailto:tabatabaeifateme@gmail.com)
-- **Amirhossein Nouranizadeh:** [nouranizadeh@gmail.com.com](mailto:nouranizadeh@gmail.com)
+- **Amirhossein Nouranizadeh:** [amirhossein.nouranizadeh@gmail.com](mailto:amirhossein.nouranizadeh@gmail.com)
 
 
 
