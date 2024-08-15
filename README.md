@@ -120,6 +120,51 @@ meaning that the last 30% of the snapshot sequence is used for testing while the
 
 - **SCHEDULER_MIN_LR**: Minimum learning rate after reduction. Default is `0.0001`. 
  
+## Data
+<div style="display: flex;">
+
+  <div style="flex: 2; padding-right: 10px;">
+    Although temporal networks are most generally represented in continuous time, the <strong>teneNCE</strong> method focuses
+    on discrete-time dynamic graphs, also known as snapshot sequences. 
+    It represents temporal networks as a series of static graphs, each capturing interactions within fixed time intervals. 
+    This approach allows for handling large volumes of interactions efficiently while encoding both 
+    temporal and topological information for downstream machine learning tasks.
+
+The discretization process is illustrated in the Figure 1. 
+  </div>
+
+  <div style="flex: 1;">
+    <img src="figures/tene.png" alt="Temporal Network" style="width: 100%;"/>
+    <figcaption>Figure 1: Illustration of a temporal network and it's corresponding snapshot sequence.</figcaption>
+  </div>
+
+</div>
+
+
+Specifically, the experiments in this project are conducted using three datasets:
+
+| **Attribute**   | **Enron** | **Colab** | **Facebook** |
+|-----------------|-----------|-----------|--------------|
+| **# Nodes**     | 184       | 315       | 663          |
+| **# Edges**     | 4,784     | 5,104     | 23,394       |
+| **# Timesteps** | 11        | 10        | 9            |
+
+### Datasets
+
+1. **Enron**: 
+   - **Description**: This dataset captures the email communication network of the Enron Corporation. Nodes represent employees, and edges correspond to email exchanges between colleagues. It provides a historical perspective on interactions among employees.
+   - **Location**: The raw data files for the Enron dataset are stored at `datasets/raw_data/enron`.
+
+2. **Colab**:
+   - **Description**: This dataset consists of collaboration data among 315 authors. Each author is represented as a node, and edges correspond to co-authorship relationships. It is designed for analyzing collaboration networks and academic interactions.
+   - **Location**: The raw data files for the Colab dataset are stored at `datasets/raw_data/colab`.
+
+3. **Facebook**:
+   - **Description**: This dataset represents social connections among users on the Facebook platform. It contains a dynamic graph of friendships and interactions, which is useful for studying social network dynamics, information diffusion, and community structures within an online social network.
+   - **Location**: The raw data files for the Facebook dataset are stored at `datasets/raw_data/facebook`.
+
+
+
 ## Citation
 
 Please cite our paper if you use this code in your own work:
