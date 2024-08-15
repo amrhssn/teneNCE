@@ -11,16 +11,28 @@ from torch_geometric.data import Data
 
 class TimeEncoder(nn.Module):
     """
-    TimeEncode class of GraphMIXER method https://github.com/CongWeilin/GraphMixer/blob/main/model.py#L32.
+    TimeEncoder class used in the GraphMIXER method for encoding time-related features.
+
+    Encodes time step information into a fixed-size vector using a cosine function and linear transformation.
+    https://github.com/CongWeilin/GraphMixer/blob/main/model.py#L32
     """
 
-    def __init__(self, dim):
+    def __init__(self, dim: int):
+        """
+        Initialize the TimeEncoder.
+
+        Args:
+            dim (int): Dimensionality of the time encoding.
+        """
         super(TimeEncoder, self).__init__()
         self.dim = dim
         self.w = nn.Linear(1, dim)
         self.reset_parameters()
 
-    def reset_parameters(self, ):
+    def reset_parameters(self):
+        """
+        Initialize parameters of the TimeEncoder.
+        """
         self.w.weight = nn.Parameter(
             (torch.from_numpy(1 / 10 ** np.linspace(0, 9, self.dim, dtype=np.float32))).reshape(self.dim, -1))
         self.w.bias = nn.Parameter(torch.zeros(self.dim))
@@ -29,19 +41,42 @@ class TimeEncoder(nn.Module):
         self.w.bias.requires_grad = False
 
     @torch.no_grad()
-    def forward(self, t):
+    def forward(self, t: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass to encode time steps.
+
+        Args:
+            t (torch.Tensor): Time steps tensor.
+
+        Returns:
+            torch.Tensor: Encoded time step representations.
+        """
         t = t.float()
         output = torch.cos(self.w(t.reshape((-1, 1)))).squeeze()
         return output
 
 
 class MPNN(nn.Module):
+    """
+    Message Passing Neural Network (MPNN) using Graph Convolutional Networks (GCN).
+
+    Consists of multiple GCN layers with batch normalization and dropout.
+    """
+
     def __init__(
             self,
             input_dim: int,
             hidden_dim: int,
             output_dim: int
     ) -> None:
+        """
+        Initialize the MPNN.
+
+        Args:
+            input_dim (int): Input feature dimension.
+            hidden_dim (int): Hidden layer dimension.
+            output_dim (int): Output feature dimension.
+        """
         super(MPNN, self).__init__()
         self.mp1 = GCNConv(in_channels=input_dim, out_channels=hidden_dim)
         self.mp2 = GCNConv(in_channels=hidden_dim, out_channels=hidden_dim)
@@ -52,6 +87,17 @@ class MPNN(nn.Module):
         self.bn3 = nn.BatchNorm1d(num_features=hidden_dim)
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor, normalize: bool = False) -> torch.Tensor:
+        """
+        Forward pass through the MPNN layers.
+
+        Args:
+            x (torch.Tensor): Node features.
+            edge_index (torch.Tensor): Graph edge indices.
+            normalize (bool, optional): Whether to normalize the output features. Defaults to False.
+
+        Returns:
+            torch.Tensor: Output node features.
+        """
         z = self.mp1(x, edge_index)
         z = self.bn1(z)
         z = F.relu(z)
@@ -71,11 +117,26 @@ class MPNN(nn.Module):
 
 
 class GGRU(nn.Module):
+    """
+    Graph Gated Recurrent Unit (GGRU) for state updates in graph sequences.
+
+    Encodes the temporal network into the hidden state space by modeling time evolution through a
+    discrete-time dynamical system, GGRU, which generates state trajectories.
+    The GGRU allows the model to spread the state information across time-respecting paths.
+    """
+
     def __init__(
             self,
             struct_embed_dim: int,
             state_dim: int
     ):
+        """
+        Initialize the GGRU.
+
+        Args:
+            struct_embed_dim (int): Dimension of the structural embeddings.
+            state_dim (int): Dimension of the state vector.
+        """
         super(GGRU, self).__init__()
         self.state_dim = state_dim
 
@@ -95,6 +156,18 @@ class GGRU(nn.Module):
             s: torch.Tensor,
             edge_weight: torch.Tensor = None,
     ) -> torch.Tensor:
+        """
+        Forward pass to update state using GGRU.
+
+        Args:
+            z (torch.Tensor): Structural embeddings.
+            edge_index (torch.Tensor): Graph edge indices.
+            s (torch.Tensor): Current state vector.
+            edge_weight (torch.Tensor, optional): Edge weights. Defaults to None.
+
+        Returns:
+            torch.Tensor: Updated state vector.
+        """
         reset_gate = torch.sigmoid(
             self.Wi_reset(z, edge_index, edge_weight) + self.Ws_reset(s, edge_index, edge_weight))
         update_gate = torch.sigmoid(
@@ -106,12 +179,28 @@ class GGRU(nn.Module):
 
 
 class TENENCE(nn.Module):
+    """
+    Temporal Network Noise Contrastive Estimation (TENENCE) model for temporal link prediction in dynamic graphs.
+
+    The model consists of Encoder, Update, LinkPredictor, LocalPredictiveEncoder,
+    GlobalPredictiveEncoder and TimeEncoder.
+    The model also computes the loss values on the forward pass of the training.
+    """
+
     def __init__(
             self,
             input_dim: int,
             hidden_dim: int,
             output_dim: int
     ) -> None:
+        """
+        Initialize the TENENCE model.
+
+        Args:
+            input_dim (int): Input feature dimension.
+            hidden_dim (int): Hidden layer dimension.
+            output_dim (int): Output feature dimension.
+        """
         super(TENENCE, self).__init__()
         self.output_dim = output_dim
         self.encoder = GAE(encoder=MPNN(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim))
@@ -126,15 +215,32 @@ class TENENCE(nn.Module):
         )
         self.global_predictive_encoder = nn.Linear(in_features=2 * output_dim, out_features=output_dim)
 
-    def forward(self, snapshot_sequence: List[Data], normalize: bool = False) -> torch.Tensor:
-        # encoder
+    def forward(
+            self,
+            snapshot_sequence: List[Data],
+            alpha: float = 1.0,
+            beta: float = 1.0,
+            normalize: bool = False
+    ) -> torch.Tensor:
+        """
+        Forward pass through the TENENCE model to compute the loss.
+
+        Args:
+            snapshot_sequence (List[Data]): Sequence of graph snapshots.
+            alpha (float, optional): Weight for the reconstruction loss. Defaults to 1.0.
+            beta (float, optional): Weight for the contrastive predictive coding loss. Defaults to 1.0.
+            normalize (bool, optional): Whether to normalize the output features. Defaults to False.
+
+        Returns:
+            torch.Tensor: Total loss combining prediction, reconstruction, and contrastive losses.
+        """
+        # Encoding the snapshot sequence
         states, state, Z_enc, Z_dec, Z_pred = self.encode_sequence(snapshot_sequence, normalize)
 
-        # computing loss
-        reconstruction_loss, infoNCE, prediction_loss = self.compute_losses(snapshot_sequence,
-                                                                            states, Z_enc, Z_dec, Z_pred)
-
-        loss = reconstruction_loss + infoNCE + prediction_loss
+        # Computing losses
+        prediction_loss, reconstruction_loss, cpc_loss = self.compute_losses(snapshot_sequence,
+                                                                             states, Z_enc, Z_dec, Z_pred)
+        loss = prediction_loss + alpha * reconstruction_loss + beta * cpc_loss
         return loss
 
     def encode_sequence(
@@ -142,25 +248,33 @@ class TENENCE(nn.Module):
             snapshot_sequence: List[Data],
             normalize: bool = False
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Encode a sequence of graph snapshots.
+
+        Args:
+            snapshot_sequence (List[Data]): Sequence of graph snapshots.
+            normalize (bool, optional): Whether to normalize the output features. Defaults to False.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+                - states: Sequence of states at each time step.
+                - state: Final state.
+                - Z_enc: Encoded graph features.
+                - Z_dec: Decoded graph features.
+                - Z_pred: Encoded graph features for future timesteps.
+        """
         num_nodes = snapshot_sequence[0].x.size(0)
-        # Initializing empty lists for structural embeddings, embeddings for graph reconstruction and graph prediction
         Z_enc = []
         Z_dec = []
         Z_pred = []
 
-        # Initializing the states
         state = torch.zeros(num_nodes, self.output_dim)
-
-        # Initializing the last seen timesteps of nodes
         last_seen = torch.zeros(num_nodes, dtype=torch.float)
 
-        # Iterating over graphs in the snapshot sequence
         states = []
         for k, graph in enumerate(snapshot_sequence):
-            # snapshot data
             x_k = graph.x.to_dense()
             edge_index_k = graph.edge_index
-            node_mask_k = graph.node_mask
 
             # Encoding current graph
             z_enc_k = self.encoder.encode(x_k, edge_index_k, normalize=normalize)
@@ -189,21 +303,54 @@ class TENENCE(nn.Module):
         Z_pred = torch.cat(Z_pred, dim=0)
         return states, state, Z_enc, Z_dec, Z_pred
 
-    def decode_next(
+    def predict_next(
             self,
             snapshot_sequence: List[Data],
             normalize: bool = False
-    ):
-        states, state, Z_enc, Z_dec, Z_pred = self.encode(snapshot_sequence, normalize)
+    ) -> torch.Tensor:
+        """
+        Predict the next graph in the sequence.
+
+        Args:
+            snapshot_sequence (List[Data]): Sequence of graph snapshots.
+            normalize (bool, optional): Whether to normalize the output features. Defaults to False.
+
+        Returns:
+            torch.Tensor: Link prediction probabilities for the next graph snapshot.
+        """
+        states, state, Z_enc, Z_dec, Z_pred = self.encode_sequence(snapshot_sequence, normalize)
         z_pred = Z_pred[-1]
-        probs = self.gae.decoder.forward_all(z_pred, sigmoid=True)
+        probs = self.encoder.decoder.forward_all(z_pred, sigmoid=True)
         return probs
 
-    def compute_losses(self, snapshot_sequence: List[Data], states, Z_enc, Z_dec, Z_pred):
+    def compute_losses(
+            self,
+            snapshot_sequence: List[Data],
+            states: torch.Tensor,
+            Z_enc: torch.Tensor,
+            Z_dec: torch.Tensor,
+            Z_pred: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Compute the prediction, reconstruction, and contrastive (InfoNCE) losses.
+
+        Args:
+            snapshot_sequence (List[Data]): Sequence of graph snapshots.
+            states (torch.Tensor): Sequence of states at each time step.
+            Z_enc (torch.Tensor): Encoded graph features.
+            Z_dec (torch.Tensor): Decoded graph features.
+            Z_pred (torch.Tensor): Encoded graph features for future timesteps.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+                - prediction_loss: Loss for predicting the next graph.
+                - reconstruction_loss: Loss for reconstructing the current graph.
+                - cpc_loss: Contrastive predictive coding loss.
+        """
         num_timesteps = len(snapshot_sequence)
         num_nodes = snapshot_sequence[0].x.size(0)
         reconstruction_loss = torch.tensor(0.0)
-        infoNCE = torch.tensor(0.0)
+        cpc_loss = torch.tensor(0.0)
         prediction_loss = torch.tensor(0.0)
         ks = torch.arange(len(snapshot_sequence)).unsqueeze(0) + 1
         ks_enc = self.time_encoder(ks)
@@ -231,7 +378,7 @@ class TENENCE(nn.Module):
                 z_cpc_local_future = self.local_predictive_encoder(
                     torch.cat([state_k_expanded, ks_enc_future_expanded], dim=-1))
                 z_cpc_global_future = self.global_predictive_encoder(
-                    torch.cat([global_state_k_expanded, ks_enc[k+1:]], dim=-1))
+                    torch.cat([global_state_k_expanded, ks_enc[k + 1:]], dim=-1))
                 z_local_future = Z_enc[k + 1:]
                 z_global_future = Z_enc[k + 1:].mean(1)
 
@@ -274,68 +421,5 @@ class TENENCE(nn.Module):
                     target=torch.cat([pos_labels, neg_labels], dim=0),
                     pos_weight=torch.tensor(len(neg_labels) / len(pos_labels))
                 )
-                infoNCE += infoNCE_k
-        return reconstruction_loss, infoNCE, prediction_loss
-
-    @staticmethod
-    def compute_local_infoNCE_loss(Z_hat: torch.Tensor, Z: torch.Tensor):
-        num_timesteps = Z.size(0)
-
-        # exclude z_hat_0 and z_0 since z_hat_0 == z_0
-        pos_scores = []
-        neg_scores = []
-        for k in range(num_timesteps):
-            z_hat_k = Z_hat[k]
-            z_k = Z[k]
-            scores_all = torch.einsum("ND, TMD -> TNM", z_hat_k, Z)
-
-            pos_scores_k = torch.diagonal(scores_all[k])
-            pos_scores.append(pos_scores_k)
-
-            # spatial negatives
-            # any time-different nodes
-            non_diagonal_mask = ~torch.eye(z_k.size(0), dtype=torch.bool)
-            spatial_mask = non_diagonal_mask.unsqueeze(0).repeat(num_timesteps, 1, 1)
-            spatial_neg_scores_k = scores_all[spatial_mask]
-            neg_scores.append(spatial_neg_scores_k)
-
-            # temporal negatives
-            # same node - different time
-            negative_times = torch.tensor(list(set(range(num_timesteps)).difference({k})), dtype=torch.long)
-            scores_all_except_k = scores_all[negative_times, :, :]
-            temporal_mask = ~spatial_mask[:-1]
-            temporal_neg_scores_k = scores_all_except_k[temporal_mask]
-            neg_scores.append(temporal_neg_scores_k)
-        pos_scores = torch.cat(pos_scores)
-        neg_scores = torch.cat(neg_scores)
-        scores = torch.cat([pos_scores, neg_scores])
-        pos_labels = torch.ones_like(pos_scores, dtype=torch.float)
-        neg_labels = torch.zeros_like(neg_scores, dtype=torch.float)
-        labels = torch.cat([pos_labels, neg_labels])
-        infoNCE = F.binary_cross_entropy_with_logits(
-            input=scores,
-            target=labels,
-            pos_weight=torch.tensor(len(neg_labels) / len(pos_labels))
-        )
-        return infoNCE
-
-    @staticmethod
-    def compute_global_infoNCE_loss(Z_hat: torch.Tensor, Z: torch.Tensor, compute_f1: bool):
-        Z = Z.mean(1)
-        scores_all = Z_hat @ Z.T
-
-        pos_scores = torch.diagonal(scores_all)
-        temporal_mask = ~torch.eye(Z.size(0), dtype=torch.bool)
-        neg_scores = scores_all[temporal_mask]
-
-        scores = torch.cat([pos_scores, neg_scores])
-        pos_labels = torch.ones_like(pos_scores, dtype=torch.float)
-        neg_labels = torch.zeros_like(neg_scores, dtype=torch.float)
-        labels = torch.cat([pos_labels, neg_labels])
-        infoNCE = F.binary_cross_entropy_with_logits(
-            input=scores,
-            target=labels,
-            pos_weight=torch.tensor(len(neg_labels) / len(pos_labels))
-        )
-
-        return infoNCE
+                cpc_loss += infoNCE_k
+        return prediction_loss, reconstruction_loss, cpc_loss
