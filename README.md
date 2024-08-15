@@ -127,9 +127,10 @@ on discrete-time dynamic graphs, also known as snapshot sequences. It represents
 The discretization process is illustrated in the image below.
 
 <p align="center">
-  <img src="figures/tene.png" alt="Temporal Network" style="width: 40%;"/>
+  <img src="figures/tene.png" alt="Temporal Network" style="width: 45%;"/>
 </p>
-*Figure 1: Illustration of a temporal network and its corresponding snapshot sequence.*
+
+_**Figure 1**: Illustration of a temporal network and its corresponding snapshot sequence._
 
 
 Specifically, the experiments in this project are conducted using three datasets:
