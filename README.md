@@ -1,5 +1,11 @@
 # teneNCE: Temporal Network Noise Contrastive Estimation for Dynamic Link Prediction
 
+<p align="center">
+  <img src="figures/arch.png" alt="Temporal Network" style="width: 100%;"/>
+</p>
+
+_**Figure 1**: Architecture of the teneNCE model._
+
 ## Introduction
 In a variety of scientific and engineering contexts, processes can be modeled as dynamical systems over 
 evolving networks where the structure and features change over time.
@@ -124,13 +130,13 @@ meaning that the last 30% of the snapshot sequence is used for testing while the
 Although temporal networks are most generally represented in continuous time, the **teneNCE** method focuses
 on discrete-time dynamic graphs, also known as snapshot sequences. It represents temporal networks as a series of static graphs, each capturing interactions within fixed time intervals. This approach allows for handling large volumes of interactions efficiently while encoding both temporal and topological information for downstream machine learning tasks.
 
-The discretization process is illustrated in the image below.
+The discretization process is illustrated in the figure below.
 
 <p align="center">
   <img src="figures/tene.png" alt="Temporal Network" style="width: 45%;"/>
 </p>
 
-_**Figure 1**: Illustration of a temporal network and its corresponding snapshot sequence._
+_**Figure 2**: Illustration of a temporal network and its corresponding snapshot sequence._
 
 
 Specifically, the experiments in this project are conducted using three datasets:
@@ -155,7 +161,15 @@ Specifically, the experiments in this project are conducted using three datasets
    - **Description**: This dataset represents social connections among users on the Facebook platform. It contains a dynamic graph of friendships and interactions, which is useful for studying social network dynamics, information diffusion, and community structures within an online social network.
    - **Location**: The raw data files for the Facebook dataset are stored at `datasets/raw_data/facebook`.
 
+### Preprocessing
 
+The raw data files are transformed into a list of PyTorch Geometric `Data` objects, `List[Data]`, 
+using the `preprocess_raw_data` function found in the `utils/data.py` file.
+
+Additionally, the `get_data` function in the same file loads the processed data and returns the 
+training and testing indices for the snapshot sequence `List[Data]`.
+
+For more details, refer to the `utils/data.py` file where these functions are implemented.
 
 ## Citation
 
