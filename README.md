@@ -138,7 +138,7 @@ The discretization process is illustrated in the figure below.
 
 _**Figure 2**: Illustration of a temporal network and its corresponding snapshot sequence._
 
-
+### Datasets
 Specifically, the experiments in this project are conducted using three datasets:
 
 | **Attribute**   | **Enron** | **Colab** | **Facebook** |
@@ -146,8 +146,6 @@ Specifically, the experiments in this project are conducted using three datasets
 | **# Nodes**     | 184       | 315       | 663          |
 | **# Edges**     | 4,784     | 5,104     | 23,394       |
 | **# Timesteps** | 11        | 10        | 9            |
-
-### Datasets
 
 1. **Enron**: 
    - **Description**: This dataset captures the email communication network of the Enron Corporation. Nodes represent employees, and edges correspond to email exchanges between colleagues. It provides a historical perspective on interactions among employees.
