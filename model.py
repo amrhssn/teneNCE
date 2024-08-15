@@ -9,6 +9,7 @@ from torch_geometric.nn.models import GAE
 from torch_geometric.data import Data
 
 
+
 class TimeEncoder(nn.Module):
     """
     TimeEncoder class used in the GraphMIXER method for encoding time-related features.
