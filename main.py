@@ -1,6 +1,7 @@
 import os
 import random
 import time
+import argparse
 import configparser
 from typing import List, Dict, Union
 
@@ -111,7 +112,18 @@ def main():
     6. Evaluates the test results.
     """
     # configuring the dataset and the model's path
-    dataset_name = 'enron'  # [enron, facebook, colab]
+    parser = argparse.ArgumentParser(description='Process dataset name.')
+    parser.add_argument(
+        '--dataset_name',
+        default='enron',
+        choices=['enron', 'facebook', 'colab'],
+        help='Specify the dataset name (options: enron, facebook, colab). Default is "enron".'
+    )
+    args = parser.parse_args()
+
+    # Access the dataset_name argument
+    dataset_name = args.dataset_name
+    print(f'[*] Dataset name selected: {dataset_name}')
     model_dir = os.path.join("model_registry")
     os.makedirs(model_dir, exist_ok=True)
     model_path = os.path.join(model_dir, f"teneNCE_{dataset_name}.pkl")
