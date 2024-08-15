@@ -1,9 +1,35 @@
-[![arXiv](https://img.shields.io/badge/arXiv-2403.18913-blue?logo=arxiv&color=%23B31B1B)](https://arxiv.org/abs/0000.00000)
+# teneNCE: Temporal Network Noise Contrastive Estimation for Dynamic Link Prediction
 
-# Temporal Network Noise Contrastive Estimation (teneNCE)
-This is a PyTorch implementation of the teneNCE model as described in our paper:
+## Introduction
+In a variety of scientific and engineering contexts, processes can be modeled as dynamical systems over 
+evolving networks where the structure and features change over time.
+Examples include disease transmission through contact networks, information propagation in communication networks, 
+and complex systems like brain networks, biological networks, ecological networks, and financial transaction networks.
+Learning expressive representations for such networks that encode both structural connectivity and their temporal
+evolution is essential for downstream data analytics and machine learning applications.
+Traditional methods often struggle to integrate both the structural and temporal information inherent in these networks.
 
-Amirhossein Nouranizadeh*, Fatemeh Tabatabaei*, Mohammad Rahmati, [*Contrastive Representation Learning for Dynamic Link Prediction in Temporal Networks*](https://arxiv.org/pdf/0000.00000.pdf), 2024, *equal contribution
+In this work, we present _**teneNCE (Temporal Network Noise Contrastive Estimation)**_, a novel approach for 
+learning expressive representations of temporal networks. 
+Our method addresses the challenge of encoding both the structural and temporal aspects of dynamic graphs 
+into meaningful vector representations. 
+This is achieved through a local and global self-supervised training of a recurrent message-passing neural network architecture 
+designed to model information flow along time-respecting paths within the network.
+
+Key features of our method include:
+- **Recurrent Message-Passing Architecture:** Facilitates the flow of information over time-respecting paths in 
+the temporal network, capturing the dynamic nature of interactions.
+- **Contrastive Training Objective:** Combines link prediction, graph reconstruction, and 
+contrastive predictive coding losses. This objective integrates self-supervised infoNCE losses at 
+both local and global scales, balancing the extraction of short-term features with long-term dynamics.
+- **Performance:** We evaluate teneNCE on datasets including _Enron_, _COLAB_, and _Facebook_, demonstrating 
+superior performance in dynamic link prediction tasks compared to existing models.
+
+Our approach effectively combines structural and temporal information, improving the accuracy of dynamic link predictions and offering a robust method for future research in temporal network analysis.
+
+For further details on implementation and usage, please refer to the sections below.
+This is a PyTorch implementation of the teneNCE model as described in the paper.
+
 
 
 ## Table of Contents
