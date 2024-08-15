@@ -121,24 +121,15 @@ meaning that the last 30% of the snapshot sequence is used for testing while the
 - **SCHEDULER_MIN_LR**: Minimum learning rate after reduction. Default is `0.0001`. 
  
 ## Data
-<div style="display: flex;">
+Although temporal networks are most generally represented in continuous time, the **teneNCE** method focuses
+on discrete-time dynamic graphs, also known as snapshot sequences. It represents temporal networks as a series of static graphs, each capturing interactions within fixed time intervals. This approach allows for handling large volumes of interactions efficiently while encoding both temporal and topological information for downstream machine learning tasks.
 
-  <div style="flex: 2; padding-right: 10px;">
-    Although temporal networks are most generally represented in continuous time, the <strong>teneNCE</strong> method focuses
-    on discrete-time dynamic graphs, also known as snapshot sequences. 
-    It represents temporal networks as a series of static graphs, each capturing interactions within fixed time intervals. 
-    This approach allows for handling large volumes of interactions efficiently while encoding both 
-    temporal and topological information for downstream machine learning tasks.
+The discretization process is illustrated in the image below.
 
-The discretization process is illustrated in the Figure 1. 
-  </div>
-
-  <div style="flex: 1;">
-    <img src="figures/tene.png" alt="Temporal Network" style="width: 100%;"/>
-    <figcaption>Figure 1: Illustration of a temporal network and it's corresponding snapshot sequence.</figcaption>
-  </div>
-
-</div>
+<p align="center">
+  <img src="figures/tene.png" alt="Temporal Network" style="width: 40%;"/>
+</p>
+*Figure 1: Illustration of a temporal network and its corresponding snapshot sequence.*
 
 
 Specifically, the experiments in this project are conducted using three datasets:
