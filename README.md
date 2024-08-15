@@ -4,7 +4,7 @@
   <img src="figures/arch.png" alt="Temporal Network" style="width: 100%;"/>
 </p>
 
-_**Figure 1**: Architecture of the teneNCE model._
+_**Figure 1**: Illustration of the teneNCE model architecture._
 
 ## Introduction
 In a variety of scientific and engineering contexts, processes can be modeled as dynamical systems over 
