@@ -171,6 +171,46 @@ training and testing indices for the snapshot sequence `List[Data]`.
 
 For more details, refer to the `utils/data.py` file where these functions are implemented.
 
+## Methodology
+The **teneNCE** model processes a sequence of snapshot graphs using the following components.
+
+The codes for the model and loss computation can be found in the `model.py` file.
+
+- **Encoder** embeds each static graph in the sequence.
+- **Update** recursively updates node state representations over time steps.
+- **Decoder** reconstructs the static graph at each time step.
+- **LinkPredictor** predicts the graph's structure at the next time step.
+- **LocalPredictiveEncoder** and **GlobalPredictiveEncoder** predict future structural embeddings based on node 
+states.
+- The **ReadOut** function aggregates node-level embeddings into a graph-level representation.
+- **TimeEncoder** encodes time steps.
+
+The model's training objective combines three loss functions:
+- **Reconstruction Loss**: The main goal is to learn node state representations that aid in 
+predicting the temporal network's structure at the next time step. The link prediction 
+loss is computed as binary cross-entropy (BCE) between predicted and actual 
+graph structures for each time step.
+- **Prediction Loss**: In addition to predicting future structures, our goal is to capture 
+the current network structure by learning representations that include a reconstruction loss.
+This loss is implemented as a graph autoencoder reconstruction loss, calculated as binary cross-entropy (BCE) 
+between the reconstructed and ground-truth adjacency matrices for all snapshots.
+- **Contrastive Predictive Coding (CPC) Loss**: 
+The final term in the model’s training objective is the CPC loss. It uses local and global infoNCE 
+losses to maximize mutual information between node representations and future graph features, 
+balancing the learning of both low-level and slow-varying features.
+
+Figure 3, illustrates the different types of negative samples for node v_2 and graph G_k at local and global scales.
+For more information, please refer to the teneNCE paper.
+
+<p align="center">
+  <img src="figures/neg-sampling.png" alt="Temporal Network" style="width: 60%;"/>
+</p>
+
+_**Figure 3**: Illustration of positive and negative sample pairs for local and global 
+infoNCE losses. This example depicts positive and negative pairs for node the v_2 and graph G_k, 
+corresponding to local and global losses. 
+For localNCE, different negative samples are colored orange, pink, and blue; for globalNCE, negative samples are colored pink._
+
 ## Citation
 
 Please cite our paper if you use this code in your own work:
