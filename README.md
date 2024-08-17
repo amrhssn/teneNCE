@@ -162,12 +162,12 @@ Specifically, the experiments in this project are conducted using three datasets
 ### Preprocessing
 
 The raw data files are transformed into a list of PyTorch Geometric `Data` objects, `List[Data]`, 
-using the `preprocess_raw_data` function found in the `utils/data.py` file.
+using the `preprocess_raw_data` function found in the `data.py` file.
 
 Additionally, the `get_data` function in the same file loads the processed data and returns the 
 training and testing indices for the snapshot sequence `List[Data]`.
 
-For more details, refer to the `utils/data.py` file where these functions are implemented.
+For more details, refer to the `data.py` file where these functions are implemented.
 
 ## Methodology
 The **teneNCE** model processes a sequence of snapshot graphs using the following components.
