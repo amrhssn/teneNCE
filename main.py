@@ -9,9 +9,9 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
-from utils.data import get_data
-from utils.eval import evaluate
+from data import get_data
 from model import TENENCE
+from eval import evaluate
 
 
 # Setting random seeds for reproducibility
