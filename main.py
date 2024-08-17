@@ -67,6 +67,50 @@ def train(
     return model
 
 
+def load_hparams() -> Dict[str, Union[int, float]]:
+    """
+    Load hyperparameters from a configuration file.
+
+    Reads hyperparameters from the "config.ini" file located in the same directory as this script.
+    The hyperparameters are expected to be in the "hyperparameters" section of the file.
+
+    Returns:
+        Dict[str, Union[int, float]]: A dictionary containing the hyperparameters with the following keys:
+            - "epochs": Number of epochs for training.
+            - "train_test_ratio": Ratio of training to testing data.
+            - "hidden_dim": Dimensionality of the hidden layers.
+            - "output_dim": Dimensionality of the output layer.
+            - "alpha": Weight for the graph reconstruction loss..
+            - "beta": Weight for the contrastive predictive coding loss.
+            - "learning_rate": Learning rate for the optimizer.
+            - "weight_decay": Weight decay (L2 regularization) for the optimizer.
+            - "scheduler_patience": Number of epochs with no improvement after which learning rate will be reduced.
+            - "scheduler_factor": Factor by which the learning rate will be reduced.
+            - "scheduler_min_lr": Minimum learning rate allowed by the scheduler.
+
+    Raises:
+        configparser.NoSectionError: If the "hyperparameters" section is missing in the config file.
+        configparser.NoOptionError: If any of the expected options are missing in the "hyperparameters" section.
+    """
+    hparams = configparser.ConfigParser()
+    hparams.read("config.ini")
+
+    hparams = {
+        "epochs": hparams.getint("hyperparameters", "EPOCHS"),
+        "train_test_ratio": hparams.getfloat("hyperparameters", "TRAIN_TEST_RATIO"),
+        "hidden_dim": hparams.getint("hyperparameters", "HIDDEN_DIM"),
+        "output_dim": hparams.getint("hyperparameters", "OUTPUT_DIM"),
+        "alpha": hparams.getfloat("hyperparameters", "ALPHA"),
+        "beta": hparams.getfloat("hyperparameters", "BETA"),
+        "learning_rate": hparams.getfloat("hyperparameters", "LEARNING_RATE"),
+        "weight_decay": hparams.getfloat("hyperparameters", "WEIGHT_DECAY"),
+        "scheduler_patience": hparams.getint("hyperparameters", "SCHEDULER_PATIENCE"),
+        "scheduler_factor": hparams.getfloat("hyperparameters", "SCHEDULER_FACTOR"),
+        "scheduler_min_lr": hparams.getfloat("hyperparameters", "SCHEDULER_MIN_LR"),
+    }
+    return hparams
+
+
 def inference(
         model: torch.nn.Module,
         dataset: List[Data],
@@ -121,7 +165,7 @@ def main():
     )
     args = parser.parse_args()
 
-    # Access the dataset_name argument
+    # reading the dataset_name argument
     dataset_name = args.dataset_name
     print(f'[*] Dataset name selected: {dataset_name}')
     model_dir = os.path.join("model_registry")
@@ -132,21 +176,7 @@ def main():
     device = torch.device("cpu")
 
     # loading the hyperparameters
-    hparams = configparser.ConfigParser()
-    hparams.read("config.ini")
-    hparams = {
-        "epochs": hparams.getint("hyperparameters", "EPOCHS"),
-        "train_test_ratio": hparams.getfloat("hyperparameters", "TRAIN_TEST_RATIO"),
-        "hidden_dim": hparams.getint("hyperparameters", "HIDDEN_DIM"),
-        "output_dim": hparams.getint("hyperparameters", "OUTPUT_DIM"),
-        "alpha": hparams.getfloat("hyperparameters", "ALPHA"),
-        "beta": hparams.getfloat("hyperparameters", "BETA"),
-        "learning_rate": hparams.getfloat("hyperparameters", "LEARNING_RATE"),
-        "weight_decay": hparams.getfloat("hyperparameters", "WEIGHT_DECAY"),
-        "scheduler_patience": hparams.getint("hyperparameters", "SCHEDULER_PATIENCE"),
-        "scheduler_factor": hparams.getfloat("hyperparameters", "SCHEDULER_FACTOR"),
-        "scheduler_min_lr": hparams.getfloat("hyperparameters", "SCHEDULER_MIN_LR"),
-    }
+    hparams = load_hparams()
 
     # loading the dataset
     dataset, train_timesteps, test_timesteps = get_data(dataset_name=dataset_name,
