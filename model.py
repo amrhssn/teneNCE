@@ -191,7 +191,8 @@ class TENENCE(nn.Module):
             self,
             input_dim: int,
             hidden_dim: int,
-            output_dim: int
+            output_dim: int,
+            device: torch.device
     ) -> None:
         """
         Initialize the TENENCE model.
@@ -200,9 +201,11 @@ class TENENCE(nn.Module):
             input_dim (int): Input feature dimension.
             hidden_dim (int): Hidden layer dimension.
             output_dim (int): Output feature dimension.
+            device (torch.device): Device for the model's tensors.
         """
         super(TENENCE, self).__init__()
         self.output_dim = output_dim
+        self.device = device
         self.encoder = GAE(encoder=MPNN(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim))
         self.update = GGRU(struct_embed_dim=2 * output_dim, state_dim=output_dim)
         self.time_encoder = TimeEncoder(dim=output_dim)
@@ -268,8 +271,8 @@ class TENENCE(nn.Module):
         Z_dec = []
         Z_pred = []
 
-        state = torch.zeros(num_nodes, self.output_dim)
-        last_seen = torch.zeros(num_nodes, dtype=torch.float)
+        state = torch.zeros(num_nodes, self.output_dim, device=self.device)
+        last_seen = torch.zeros(num_nodes, dtype=torch.float, device=self.device)
 
         states = []
         for k, graph in enumerate(snapshot_sequence):
@@ -349,10 +352,10 @@ class TENENCE(nn.Module):
         """
         num_timesteps = len(snapshot_sequence)
         num_nodes = snapshot_sequence[0].x.size(0)
-        reconstruction_loss = torch.tensor(0.0)
-        cpc_loss = torch.tensor(0.0)
-        prediction_loss = torch.tensor(0.0)
-        ks = torch.arange(len(snapshot_sequence)).unsqueeze(0) + 1
+        reconstruction_loss = torch.tensor(0.0, device=self.device)
+        cpc_loss = torch.tensor(0.0, device=self.device)
+        prediction_loss = torch.tensor(0.0, device=self.device)
+        ks = torch.arange(len(snapshot_sequence), device=self.device).unsqueeze(0) + 1
         ks_enc = self.time_encoder(ks)
         # losses
         for k, graph in enumerate(snapshot_sequence):
