@@ -166,13 +166,6 @@ def main():
         choices=['enron', 'facebook', 'colab'],
         help='Specify the dataset name (options: enron, facebook, colab). Default is "enron".'
     )
-    parser.add_argument(
-        '--device',
-        default='cpu',
-        choices=['cpu', 'cuda'],
-        help='Specify the device to run the model on (options: cpu, cuda). Default is "cpu".'
-    )
-
     args = parser.parse_args()
 
     # reading the dataset_name argument
@@ -183,7 +176,7 @@ def main():
     model_path = os.path.join(model_dir, f"teneNCE_{dataset_name}.pkl")
 
     # setting the device
-    device = torch.device(args.device)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f'[*] Device selected: {device}')
 
     # loading the hyperparameters
