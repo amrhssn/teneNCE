@@ -96,7 +96,7 @@ python main.py --dataset_name <dataset_name>
 Replace `<dataset_name>` with one of the available options (`enron`, `facebook`, `colab`).
 For example, to run the code on the _Facebook_ dataset, use:
 ```bash
-python main.py --dataset_name facebook
+python main.py --dataset_name enron
 ```
 
 ### Hyperparameters
