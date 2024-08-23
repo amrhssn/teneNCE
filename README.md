@@ -133,12 +133,12 @@ on discrete-time dynamic graphs, also known as snapshot sequences. It represents
 The discretization process is illustrated in the figure below.
 
 <p align="center">
-  <img src="figures/tene.png" alt="Temporal Network" style="width: 45%;"/>
+  <img src="figures/tene.png" alt="Temporal Network" style="width: 60%;"/>
 </p>
 
 _**Figure 2**: Illustration of a temporal network and its corresponding snapshot sequence._
 
-
+### Datasets
 Specifically, the experiments in this project are conducted using three datasets:
 
 | **Attribute**   | **Enron** | **Colab** | **Facebook** |
@@ -147,29 +147,27 @@ Specifically, the experiments in this project are conducted using three datasets
 | **# Edges**     | 4,784     | 5,104     | 23,394       |
 | **# Timesteps** | 11        | 10        | 9            |
 
-### Datasets
-
 1. **Enron**: 
    - **Description**: This dataset captures the email communication network of the Enron Corporation. Nodes represent employees, and edges correspond to email exchanges between colleagues. It provides a historical perspective on interactions among employees.
-   - **Location**: The raw data files for the Enron dataset are stored at `datasets/raw_data/enron`.
+   - **Location**: `datasets/raw_data/enron`.
 
 2. **Colab**:
    - **Description**: This dataset consists of collaboration data among 315 authors. Each author is represented as a node, and edges correspond to co-authorship relationships. It is designed for analyzing collaboration networks and academic interactions.
-   - **Location**: The raw data files for the Colab dataset are stored at `datasets/raw_data/colab`.
+   - **Location**: `datasets/raw_data/colab`.
 
 3. **Facebook**:
    - **Description**: This dataset represents social connections among users on the Facebook platform. It contains a dynamic graph of friendships and interactions, which is useful for studying social network dynamics, information diffusion, and community structures within an online social network.
-   - **Location**: The raw data files for the Facebook dataset are stored at `datasets/raw_data/facebook`.
+   - **Location**: `datasets/raw_data/facebook`.
 
 ### Preprocessing
 
 The raw data files are transformed into a list of PyTorch Geometric `Data` objects, `List[Data]`, 
-using the `preprocess_raw_data` function found in the `utils/data.py` file.
+using the `preprocess_raw_data` function found in the `data.py` file.
 
 Additionally, the `get_data` function in the same file loads the processed data and returns the 
 training and testing indices for the snapshot sequence `List[Data]`.
 
-For more details, refer to the `utils/data.py` file where these functions are implemented.
+For more details, refer to the `data.py` file where these functions are implemented.
 
 ## Methodology
 The **teneNCE** model processes a sequence of snapshot graphs using the following components.
@@ -199,17 +197,25 @@ The final term in the model’s training objective is the CPC loss. It uses loca
 losses to maximize mutual information between node representations and future graph features, 
 balancing the learning of both low-level and slow-varying features.
 
-Figure 3, illustrates the different types of negative samples for node v_2 and graph G_k at local and global scales.
-For more information, please refer to the teneNCE paper.
+Figure 3, visualizes the different types of negative samples for node v_2 and graph G_k at local and global scales.
+In the local context of CPC training for the temporal network, at each node in the current timestep of the model, 
+its collection of negative samples can be divided into three distinct subsets.:
+- Same node, different time
+- Different node, same time
+- Different node, different time
+
+In the global context, the set of negative samples for the current timestep of the model comprises all graphs from timesteps other than the current one.
+
 
 <p align="center">
   <img src="figures/neg-sampling.png" alt="Temporal Network" style="width: 60%;"/>
 </p>
 
 _**Figure 3**: Illustration of positive and negative sample pairs for local and global 
-infoNCE losses. This example depicts positive and negative pairs for node the v_2 and graph G_k, 
-corresponding to local and global losses. 
-For localNCE, different negative samples are colored orange, pink, and blue; for globalNCE, negative samples are colored pink._
+infoNCE losses. For localNCE, different negative samples are colored orange, pink, and blue; for globalNCE, 
+negative samples are colored pink._  
+
+For more information, please refer to the teneNCE paper.
 
 ## Citation
 

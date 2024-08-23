@@ -9,9 +9,9 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
-from utils.data import get_data
-from utils.eval import evaluate
+from data import get_data
 from model import TENENCE
+from eval import evaluate
 
 
 # Setting random seeds for reproducibility
@@ -67,11 +67,56 @@ def train(
     return model
 
 
+def load_hparams() -> Dict[str, Union[int, float]]:
+    """
+    Load hyperparameters from a configuration file.
+
+    Reads hyperparameters from the "config.ini" file located in the same directory as this script.
+    The hyperparameters are expected to be in the "hyperparameters" section of the file.
+
+    Returns:
+        Dict[str, Union[int, float]]: A dictionary containing the hyperparameters with the following keys:
+            - "epochs": Number of epochs for training.
+            - "train_test_ratio": Ratio of training to testing data.
+            - "hidden_dim": Dimensionality of the hidden layers.
+            - "output_dim": Dimensionality of the output layer.
+            - "alpha": Weight for the graph reconstruction loss..
+            - "beta": Weight for the contrastive predictive coding loss.
+            - "learning_rate": Learning rate for the optimizer.
+            - "weight_decay": Weight decay (L2 regularization) for the optimizer.
+            - "scheduler_patience": Number of epochs with no improvement after which learning rate will be reduced.
+            - "scheduler_factor": Factor by which the learning rate will be reduced.
+            - "scheduler_min_lr": Minimum learning rate allowed by the scheduler.
+
+    Raises:
+        configparser.NoSectionError: If the "hyperparameters" section is missing in the config file.
+        configparser.NoOptionError: If any of the expected options are missing in the "hyperparameters" section.
+    """
+    hparams = configparser.ConfigParser()
+    hparams.read("config.ini")
+
+    hparams = {
+        "epochs": hparams.getint("hyperparameters", "EPOCHS"),
+        "train_test_ratio": hparams.getfloat("hyperparameters", "TRAIN_TEST_RATIO"),
+        "hidden_dim": hparams.getint("hyperparameters", "HIDDEN_DIM"),
+        "output_dim": hparams.getint("hyperparameters", "OUTPUT_DIM"),
+        "alpha": hparams.getfloat("hyperparameters", "ALPHA"),
+        "beta": hparams.getfloat("hyperparameters", "BETA"),
+        "learning_rate": hparams.getfloat("hyperparameters", "LEARNING_RATE"),
+        "weight_decay": hparams.getfloat("hyperparameters", "WEIGHT_DECAY"),
+        "scheduler_patience": hparams.getint("hyperparameters", "SCHEDULER_PATIENCE"),
+        "scheduler_factor": hparams.getfloat("hyperparameters", "SCHEDULER_FACTOR"),
+        "scheduler_min_lr": hparams.getfloat("hyperparameters", "SCHEDULER_MIN_LR"),
+    }
+    return hparams
+
+
 def inference(
         model: torch.nn.Module,
         dataset: List[Data],
         test_timesteps: List[int],
-        model_path: str
+        model_path: str,
+        device: torch.device
 ) -> List[torch.Tensor]:
     """
     Perform inference with the trained model on test timesteps.
@@ -81,13 +126,15 @@ def inference(
         dataset (List[Data]): List of PyTorch Geometric Data objects for all timesteps.
         test_timesteps (List[int]): List of timesteps to evaluate.
         model_path (str): Path to the saved model.
+        device (torch.device): The device (CPU or GPU) used to map the model's weights when loading the state dictionary.
+
 
     Returns:
         List[torch.Tensor]: List of prediction tensors for each test timestep.
     """
     print(f"=========== Inference ===========")
     print(f"[*] Loading the model {model_path}")
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device))
 
     model.eval()
     test_probs = []
@@ -96,7 +143,7 @@ def inference(
         data = dataset[:k]
         with torch.no_grad():
             probs = model.predict_next(snapshot_sequence=data, normalize=True)
-        test_probs.append(probs)
+        test_probs.append(probs.cpu())  # Move the result back to CPU for evaluation
     return test_probs
 
 
@@ -119,9 +166,16 @@ def main():
         choices=['enron', 'facebook', 'colab'],
         help='Specify the dataset name (options: enron, facebook, colab). Default is "enron".'
     )
+    parser.add_argument(
+        '--device',
+        default='cpu',
+        choices=['cpu', 'cuda'],
+        help='Specify the device to run the model on (options: cpu, cuda). Default is "cpu".'
+    )
+
     args = parser.parse_args()
 
-    # Access the dataset_name argument
+    # reading the dataset_name argument
     dataset_name = args.dataset_name
     print(f'[*] Dataset name selected: {dataset_name}')
     model_dir = os.path.join("model_registry")
@@ -129,24 +183,11 @@ def main():
     model_path = os.path.join(model_dir, f"teneNCE_{dataset_name}.pkl")
 
     # setting the device
-    device = torch.device("cpu")
+    device = torch.device(args.device)
+    print(f'[*] Device selected: {device}')
 
     # loading the hyperparameters
-    hparams = configparser.ConfigParser()
-    hparams.read("config.ini")
-    hparams = {
-        "epochs": hparams.getint("hyperparameters", "EPOCHS"),
-        "train_test_ratio": hparams.getfloat("hyperparameters", "TRAIN_TEST_RATIO"),
-        "hidden_dim": hparams.getint("hyperparameters", "HIDDEN_DIM"),
-        "output_dim": hparams.getint("hyperparameters", "OUTPUT_DIM"),
-        "alpha": hparams.getfloat("hyperparameters", "ALPHA"),
-        "beta": hparams.getfloat("hyperparameters", "BETA"),
-        "learning_rate": hparams.getfloat("hyperparameters", "LEARNING_RATE"),
-        "weight_decay": hparams.getfloat("hyperparameters", "WEIGHT_DECAY"),
-        "scheduler_patience": hparams.getint("hyperparameters", "SCHEDULER_PATIENCE"),
-        "scheduler_factor": hparams.getfloat("hyperparameters", "SCHEDULER_FACTOR"),
-        "scheduler_min_lr": hparams.getfloat("hyperparameters", "SCHEDULER_MIN_LR"),
-    }
+    hparams = load_hparams()
 
     # loading the dataset
     dataset, train_timesteps, test_timesteps = get_data(dataset_name=dataset_name,
@@ -158,7 +199,8 @@ def main():
     # initializing the model, optimizer and learning rate scheduler
     model = TENENCE(input_dim=INPUT_DIM,
                     hidden_dim=hparams["hidden_dim"],
-                    output_dim=hparams["output_dim"])
+                    output_dim=hparams["output_dim"],
+                    device=device).to(device=device)
     optimizer = torch.optim.Adam(model.parameters(),
                                  lr=hparams["learning_rate"],
                                  weight_decay=hparams["weight_decay"])
@@ -181,7 +223,8 @@ def main():
     test_probs = inference(model=model,
                            dataset=dataset,
                            test_timesteps=test_timesteps,
-                           model_path=model_path)
+                           model_path=model_path,
+                           device=device)
 
     # evaluating the test probabilities
     test_results = evaluate(test_probs=test_probs,
