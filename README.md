@@ -1,5 +1,5 @@
 # teneNCE: Temporal Network Noise Contrastive Estimation for Dynamic Link Prediction
-
+This is a PyTorch implementation of the paper [Contrastive Representation Learning for Dynamic Link Prediction in Temporal Networks](https://arxiv.org/pdf/2408.12753).
 <p align="center">
   <img src="figures/arch.png" alt="Temporal Network" style="width: 100%;"/>
 </p>
@@ -94,7 +94,7 @@ python main.py --dataset_name <dataset_name>
 ```
 
 Replace `<dataset_name>` with one of the available options (`enron`, `facebook`, `colab`).
-For example, to run the code on the _Facebook_ dataset, use:
+For example, to run the code on the _Enron_ dataset, use:
 ```bash
 python main.py --dataset_name enron
 ```
@@ -222,12 +222,11 @@ For more information, please refer to the teneNCE paper.
 Please cite our paper if you use this code in your own work:
 
 ```bibtex
-@article{teneNCE,
+@article{tenence,
   title={Contrastive Representation Learning for Dynamic Link Prediction in Temporal Networks},
-  author={Amirhossein Nouranizadeh, Fatemeh Tabatabaei and Mohammad Rahmati},
-  year={2024},
-  journal={Journal Name},
-  note={\textbf{*}equal contribution}
+  author={Nouranizadeh, Amirhossein and Tabatabaei Far, Fatemeh and Rahmati, Mohammad},
+  journal={arXiv preprint arXiv:2408.12753},
+  year={2024}
 }
 ```
 
