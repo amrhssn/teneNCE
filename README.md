@@ -1,5 +1,8 @@
 # teneNCE: Temporal Network Noise Contrastive Estimation for Dynamic Link Prediction
+[![arXiv](https://img.shields.io/badge/arXiv-2408.12753-blue?logo=arxiv&color=%23B31B1B)](https://arxiv.org/abs/2408.12753)
+
 This is a PyTorch implementation of the paper [Contrastive Representation Learning for Dynamic Link Prediction in Temporal Networks](https://arxiv.org/pdf/2408.12753).
+
 <p align="center">
   <img src="figures/arch.png" alt="Temporal Network" style="width: 100%;"/>
 </p>
@@ -222,9 +225,9 @@ For more information, please refer to the teneNCE paper.
 Please cite our paper if you use this code in your own work:
 
 ```bibtex
-@article{tenence,
+@article{nouranizadeh2024contrastive,
   title={Contrastive Representation Learning for Dynamic Link Prediction in Temporal Networks},
-  author={Nouranizadeh, Amirhossein and Tabatabaei Far, Fatemeh and Rahmati, Mohammad},
+  author={Nouranizadeh, Amirhossein and Far, Fatemeh Tabatabaei and Rahmati, Mohammad},
   journal={arXiv preprint arXiv:2408.12753},
   year={2024}
 }
@@ -234,7 +237,7 @@ Please cite our paper if you use this code in your own work:
 
 For any questions or inquiries, please feel free to contact us:
 
-- **Fatemeh Tabatabaei:** [tabatabaeifatemeh@gmail.com](mailto:tabatabaeifateme@gmail.com)
+- **Fatemeh Tabatabaei Far:** [tabatabaeifatemeh@gmail.com](mailto:tabatabaeifateme@gmail.com)
 - **Amirhossein Nouranizadeh:** [amirhossein.nouranizadeh@gmail.com](mailto:amirhossein.nouranizadeh@gmail.com)
 
 
